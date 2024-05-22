@@ -14,7 +14,6 @@
 */
 
 #include "field.h"
-#include "serializer.h"
 
 namespace InstantMeshes
 {
@@ -1465,34 +1464,6 @@ Optimizer::Optimizer(MultiResolutionHierarchy &mRes, bool interactive, int concu
       mInteractive(interactive), mLastUpdate(0.0f), mProgress(1.f),
       mConcurrency(concurrency) {
     mThread = std::thread(&Optimizer::run, this);
-}
-
-void Optimizer::save(Serializer &state) {
-    state.set("running", mRunning);
-    state.set("optimizeOrientations", mOptimizeOrientations);
-    state.set("optimizePositions", mOptimizePositions);
-    state.set("hierarchical", mHierarchical);
-    state.set("progress", mProgress);
-    state.set("extrinsic", mExtrinsic);
-    state.set("levelIterations", mLevelIterations);
-    state.set("rosy", mRoSy);
-    state.set("posy", mPoSy);
-    state.set("lastUpdate", mLastUpdate);
-    state.set("level", mLevel);
-}
-
-void Optimizer::load(const Serializer &state) {
-    state.get("running", mRunning);
-    state.get("optimizeOrientations", mOptimizeOrientations);
-    state.get("optimizePositions", mOptimizePositions);
-    state.get("hierarchical", mHierarchical);
-    state.get("progress", mProgress);
-    state.get("extrinsic", mExtrinsic);
-    state.get("levelIterations", mLevelIterations);
-    state.get("rosy", mRoSy);
-    state.get("posy", mPoSy);
-    state.get("lastUpdate", mLastUpdate);
-    state.get("level", mLevel);
 }
 
 void Optimizer::optimizeOrientations(int level) {

@@ -156,18 +156,15 @@ compute_position_singularities(const MultiResolutionHierarchy &mRes,
 
 /* Field optimizer (invokes optimization kernels in a separate thread) */
 
-class Serializer;
 class Optimizer {
 public:
     Optimizer(MultiResolutionHierarchy &mRes, bool interactive = false, int concurrency = -1);
-    void save(Serializer &state);
-    void load(const Serializer &state);
 
     void stop() {
         if (mOptimizeOrientations)
             mRes.propagateSolution(mRoSy);
         mOptimizePositions = mOptimizeOrientations = false;
-        notify(); 
+        notify();
     }
 
     void shutdown() { mRunning = false; notify(); mThread.join(); }

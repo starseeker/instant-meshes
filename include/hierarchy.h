@@ -19,8 +19,6 @@
 namespace InstantMeshes
 {
 
-class Serializer;
-
 extern AdjacencyMatrix
 downsample_graph(const AdjacencyMatrix adj, const MatrixXf &V,
                  const MatrixXf &N, const VectorXf &areas, MatrixXf &V_p,
@@ -33,8 +31,6 @@ struct MultiResolutionHierarchy {
 public:
     MultiResolutionHierarchy();
     void free();
-    void save(Serializer &state);
-    void load(const Serializer &state);
 
     int levels() const { return (int) mV.size(); }
 

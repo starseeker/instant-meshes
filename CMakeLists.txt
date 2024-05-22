@@ -1,149 +1,32 @@
 cmake_minimum_required(VERSION 3.10.0)
 
-project(InstantMeshes VERSION 1.0.0 DESCRIPTION "Instant Meshes Library")
+project(InstantMeshes
+  VERSION 1.0.0
+  DESCRIPTION "Instant Meshes Library"
+  )
 
-find_package(Eigen3 3.4 REQUIRED PATHS ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/install/eigen NO_DEFAULT_PATH)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
+find_package(Eigen3 3.4 REQUIRED)
+find_package(TBB REQUIRED)
 
-option(BUILD_SHARED_LIBS "Build InstantMeshes as a shared library." ON)
+if (NOT DEFINED BIN_DIR)
+  set (BIN_DIR bin)
+endif (NOT DEFINED BIN_DIR)
 
-if(BUILD_SHARED_LIBS)
-    set(LIBRARY_TYPE SHARED)
-else()
-    set(LIBRARY_TYPE STATIC)
-endif()
+if (NOT DEFINED LIB_DIR)
+  set (LIB_DIR lib)
+endif (NOT DEFINED LIB_DIR)
 
-# Build TBB
-set(TBB_TARGET tbb_static)
-set(TBB_BUILD_STATIC ON CACHE BOOL " " FORCE)
-set(TBB_BUILD_SHARED OFF CACHE BOOL " " FORCE)
-set(TBB_BUILD_TBBMALLOC OFF CACHE BOOL " " FORCE)
-set(TBB_BUILD_TBBMALLOC_PROXY OFF CACHE BOOL " " FORCE)
-set(TBB_BUILD_TESTS OFF CACHE BOOL " " FORCE)
+if (NOT DEFINED INCLUDE_DIR)
+  set (INCLUDE_DIR include)
+endif (NOT DEFINED INCLUDE_DIR)
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/tbb ext_build/tbb)
-set_property(TARGET ${TBB_TARGET} tbb_def_files PROPERTY FOLDER "dependencies")
+add_subdirectory(include)
+add_subdirectory(src)
 
-set(LIBRARY_NAME InstantMeshes)
-
-# Add the library.
-add_library(${LIBRARY_NAME} ${LIBRARY_TYPE}
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/adjacency.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/batch.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/bvh.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/cleanup.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/dedge.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/extract.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/field.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/hierarchy.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/meshio.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/meshstats.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/normal.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/reorder.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/serializer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/smoothcurve.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/subdivide.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ext/rply/rply.c)
-
-target_include_directories(${LIBRARY_NAME} PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/ext/rply
-    ${CMAKE_CURRENT_SOURCE_DIR}/ext/dset
-    ${CMAKE_CURRENT_SOURCE_DIR}/ext/pcg32
-    ${CMAKE_CURRENT_SOURCE_DIR}/ext/pss
-    ${CMAKE_CURRENT_SOURCE_DIR}/ext/tbb/include)
-
-target_link_libraries(${LIBRARY_NAME} PRIVATE
-    Eigen3::Eigen
-    ${TBB_TARGET}
-    pthread
-    dl)
-
-# Set the library version
-set_target_properties(${LIBRARY_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
-
-if(BUILD_SHARED_LIBS)
-    # Set .so major version so that libInstantMeshes.so.1 will be a symlink to libInstantMeshes.so.1.0.0
-    set_target_properties(${LIBRARY_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
-endif()
-
-# Install and export
-
-# Set install directories
-include(GNUInstallDirs)
-
-set(LIBRARY_CMAKE_DIR ${CMAKE_INSTALL_LIBDIR}/${LIBRARY_NAME}/cmake)
-set(LIBRARY_INCLUDE_DIR ${CMAKE_INSTALL_INCLUDEDIR})
-set(LIBRARY_LIBRARY_DIR ${CMAKE_INSTALL_LIBDIR})
-set(LIBRARY_RUNTIME_DIR ${CMAKE_INSTALL_BINDIR})
-#set(LIBRARY_DOC_DIR ${CMAKE_INSTALL_DOCDIR})
-
-# Create CMake config files
-include(CMakePackageConfigHelpers)
-
-configure_package_config_file(
-    ${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in
-    ${LIBRARY_NAME}Config.cmake
-    INSTALL_DESTINATION ${LIBRARY_CMAKE_DIR}
-    PATH_VARS LIBRARY_INCLUDE_DIR LIBRARY_LIBRARY_DIR
-    NO_CHECK_REQUIRED_COMPONENTS_MACRO)
-
-write_basic_package_version_file(
-    ${LIBRARY_NAME}ConfigVersion.cmake
-    VERSION ${PROJECT_VERSION}
-    COMPATIBILITY SameMajorVersion)
-
-# Set install include directories
-target_include_directories(${LIBRARY_NAME} INTERFACE
-    $<INSTALL_INTERFACE:${LIBRARY_INCLUDE_DIR}>)
-
-
-# Install library binaries
-install(TARGETS ${LIBRARY_NAME} ${TBB_TARGET}
-    EXPORT ${LIBRARY_NAME}Targets 
-    LIBRARY DESTINATION ${LIBRARY_LIBRARY_DIR}
-    RUNTIME DESTINATION ${LIBRARY_RUNTIME_DIR})
-
-# Install CMake config files
-install(FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/${LIBRARY_NAME}Config.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/${LIBRARY_NAME}ConfigVersion.cmake
-    DESTINATION ${LIBRARY_CMAKE_DIR})
-
-install(EXPORT ${LIBRARY_NAME}Targets
-   NAMESPACE ${LIBRARY_NAME}::
-   DESTINATION ${LIBRARY_CMAKE_DIR})
-
-# Install public API
-
-# Install the top-level header files
-install(FILES 
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/aabb.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/adjacency.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/batch.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/bvh.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/cleanup.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/common.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/dedge.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/extract.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/field.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/hierarchy.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/meshio.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/meshstats.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/normal.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/reorder.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/serializer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/smoothcurve.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/subdivide.h
-    DESTINATION ${LIBRARY_INCLUDE_DIR}/instant-meshes)
-
-# Install licence file
-#install(FILES LICENSE DESTINATION ${LIBRARY_DOC_DIR})
-
-# Uninstall
-if(NOT TARGET uninstall)
-    configure_file(
-        ${CMAKE_CURRENT_LIST_DIR}/uninstall.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/uninstall.cmake IMMEDIATE @ONLY)
-
-    add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/uninstall.cmake)
-endif()
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
